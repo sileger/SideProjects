@@ -51,5 +51,3 @@ end
 
 fig = plot(VmPlot)
 fig = plot!(ΔVmPlot)
-
-getproperty.(timeseries, :Vm)
