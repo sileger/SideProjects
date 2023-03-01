@@ -197,13 +197,13 @@ end
 
 
 """ 
-    mnemonic_discrimination()
+    mnemonic_discriminationV2()
 Computes mnemonic discrimination capacity of an RBM given X patterns
 
 Returns slope of energy x edit distance plot, the figure of said plot, energy vector, and edit distance vector
 """
 
-function mnemonic_discrimination(X::Matrix, DG::RBM)
+function mnemonic_discrimination(X::Matrix, Xold::Matrix, DG::RBM)
 
     Eall = Float64.(energy_patterns(X, DG))
 
@@ -211,16 +211,19 @@ function mnemonic_discrimination(X::Matrix, DG::RBM)
 
     for i in 1:size(X, 1)
         S_hold = Vector{Float64}(undef, 0)
-        for j in 1:size(X, 1)
-            if i != j
-                S_hold = append!(S_hold, similarity(X[i,:], X[j,:]))
+        for j in 1:size(Xold, 1)
+            
+            S_hold = append!(S_hold, similarity(X[i,:], Xold[j,:]))
+            if S_hold == 0
+                break
             end
+            
         end
 
-        Sim_all = append!(Sim_all, mean(S_hold))
+        Sim_all = append!(Sim_all, minimum(S_hold))
     end
 
-    figMD = scatter(Sim_all, Eall, xlabel="Average Edit Distance", ylabel="Energy")
+    figMD = scatter(Sim_all, Eall, xlabel="Shortest Edit Distance", ylabel="Energy")
 
     data = DataFrame(Energy = Eall, Edit_Distance = Sim_all)
     fm = @formula(Energy ~ Edit_Distance)
@@ -229,4 +232,25 @@ function mnemonic_discrimination(X::Matrix, DG::RBM)
     slope = coef(linearRegressor)[2]
 
     return slope, figMD, Eall, Sim_all
+end
+
+""" 
+    energy_lure_foils()
+Computes energy of patterns, seperated by whether the pattern is old/lure/foil
+
+Returns LDI, REC, and energy of each pattern type
+"""
+
+function energy_lure_foils(Xall::Matrix, Xall_labs::Vector{Float64}, DG::RBM)
+
+    Eall = Float64.(energy_patterns(Xall, DG))
+    Eold = Float64.(energy_patterns(Xall[Xall_labs .== 0, :], DG))
+    Elures = Float64.(energy_patterns(Xall[Xall_labs .== 1, :], DG))
+    Efoils = Float64.(energy_patterns(Xall[Xall_labs .== 2, :], DG))
+
+    LDI = (mean(Elures) - mean(Eold)) / mean(Eold)
+    REC = (mean(Efoils) - mean(Eold)) / mean(Eold)
+
+    return LDI, REC, mean(Eold), mean(Elures), mean(Efoils)
+
 end
