@@ -17,6 +17,11 @@ AUC = Matrix{Float64}(undef, condition_n, DG_n)
 figsPS = Matrix(undef, condition_n, DG_n)
 MD = Matrix{Float64}(undef, condition_n, DG_n)
 figsMD = Matrix(undef, condition_n, DG_n)
+LDI = Matrix{Float64}(undef, condition_n, DG_n)
+REC = Matrix{Float64}(undef, condition_n, DG_n)
+Eold = Matrix{Float64}(undef, condition_n, DG_n)
+Elures = Matrix{Float64}(undef, condition_n, DG_n)
+Efoils = Matrix{Float64}(undef, condition_n, DG_n)
 
 #initial parameter values
 N = 100; K = 500
@@ -31,7 +36,8 @@ for i in 1:condition_n #for each condition
         DGexp[i,j], res_DG = train(DGexp[i,j], X, Xt, Y, Yt)
     
         AUC[i,j], figsPS[i,j], = pattern_separation(Xt, DGexp[i,j])
-        MD[i,j], figsMD[i,j], = mnemonic_discrimination(Xt, DGexp[i,j])
+        MD[i,j], figsMD[i,j], = mnemonic_discriminationV2(Xt, X, DGexp[i,j])
+        LDI[i,j], REC[i,j], Eold[i,j], Elures[i,j], Efoils[i,j] = energy_lure_foils(Xall, Xall_labs, DGexp[i,j])
     
         global seed += 1
     end
@@ -44,4 +50,20 @@ end
 fig_MD = violin(MD[1,:], xlabel="Condition multiplier", ylabel="Mnemonic Discrimination", xticks = ([1:condition_n;], string.(condition_multiplier)), legend = false)
 for i in 2:condition_n
     fig_MD = violin!(MD[i,:])
+end
+fig_LDI = violin(LDI[1,:], xlabel="Condition multiplier", ylabel="LDI", xticks = ([1:condition_n;], string.(condition_multiplier)), legend = false)
+for i in 2:condition_n
+    fig_LDI = violin!(LDI[i,:])
+end
+fig_REC = violin(REC[1,:], xlabel="Condition multiplier", ylabel="REC", xticks = ([1:condition_n;], string.(condition_multiplier)), legend = false)
+for i in 2:condition_n
+    fig_REC = violin!(REC[i,:])
+end
+fig_lures = violin(Elures[1,:], xlabel="Condition multiplier", ylabel="Energy Lures", xticks = ([1:condition_n;], string.(condition_multiplier)), legend = false)
+for i in 2:condition_n
+    fig_lures = violin!(Elures[i,:])
+end
+fig_foils = violin(Efoils[1,:], xlabel="Condition multiplier", ylabel="Energy Foils", xticks = ([1:condition_n;], string.(condition_multiplier)), legend = false)
+for i in 2:condition_n
+    fig_foils = violin!(Efoils[i,:])
 end
